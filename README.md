@@ -12,7 +12,15 @@ i also used typescript, there are some any types in there and i have to say alth
 
 i also used out of the box react testing library, which i have never used before and there is only one sample test in there, but i have to say i prefer using enzyme with jest, i really like the jquery style of navigating through the shallow dom and asserting what it finds.
 
-original readme..
+not much change from the create react app config apart from
+
+### `npm start`
+
+will start both the app and the api, the env is commited but change the ports as you wish, currenly:  
+PORT=3008
+API_PORT=3011
+
+original readme...
 
 # Getting Started with Create React App
 

@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css?family=Manrope");
+
+#app {
+  max-width: 850px;
+  margin: 0 auto;
+  font-family: "Manrope";
+}
+.user-card {
+  display: flex;
+  flex-flow: column wrap;
+  margin: 0.4rem;
+  padding: 0.5rem;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  flex-grow: 2;
+  border-radius: 7px;
+}
+
+.user-card-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.user-card-row > a > i {
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+.user-card-row-wrap {
+  display: flex;
+  flex-direction: row;
+  flex-flow: wrap;
+}
+
+.user-card-col {
+  display: flex;
+  flex-flow: column wrap;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-card-row > img {
+  align-self: left;
+  flex-grow: inherit;
+  max-width: 120px;
+  max-height: 100px;
+  margin: 0 0.5rem 0.5rem 0;
+}
+
+.btn-group-mem {
+  color: white !important;
+  font-weight: bold;
+  margin-right: 7px;
+  margin-bottom: 3px;
+}

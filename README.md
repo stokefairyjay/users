@@ -1,3 +1,17 @@
+JJ: yes this app was bootstrapped with create react app, i am a fan of using a custom webpack build just because it feels like i have more control but create react app is great for a quick starts
+
+the app has 3 main pages, list profile users, manage users which has add or edit and list and manage groups
+
+groups can be assigned to users on the edit user profile page and groups can be deleted when there are no active members
+
+i used json-server for the 'backend which i've never used before but it's brilliant and great for projects where the focus is front end
+
+i also used typescript, yes there are some any types in there and i have to say although i have always commercially used typescript and appreciate the added value, understanding and ide benefits of typescript, it did for me slow down some dev work as i've been coding recently without. i'm sure typescript evangelists would compleltey disagree with me but that was just how i felt in this project
+
+i also used out of the box react testing library, which i have never used before and there is only one sample test in there, but i have to say i prefer using enzyme with jest, i really like the jquery style of navigating through the shallow dom and asserting what it finds.
+
+original readme..
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

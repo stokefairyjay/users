@@ -1,12 +1,13 @@
-import React, { Component } from "react";
+import React, { Component, ChangeEvent } from "react";
 import UserListView from "./UserListView";
 import Spinner from "./common/Spinner";
 import { getUserList } from "../services/userManagement";
+import { IUserGroup, IGroup } from "../interfaces/index";
 
 interface IUserListProps {}
 
 interface IUserListState {
-  users: any;
+  users: IUserGroup[];
   loading: boolean;
   filteredUsers: any;
 }
@@ -31,11 +32,11 @@ class UserList extends Component<IUserListProps, IUserListState> {
     });
   }
 
-  searchUsers = (event: any) => {
+  searchUsers = (event: ChangeEvent<HTMLInputElement>) => {
     const searchTerm = event.target.value.toLowerCase();
 
     const filteredUsers = this.state.users?.filter(
-      (user: any) =>
+      (user: IUserGroup) =>
         user.firstName.toLowerCase().includes(searchTerm) ||
         user.lastName.toLowerCase().includes(searchTerm)
     );
@@ -45,15 +46,24 @@ class UserList extends Component<IUserListProps, IUserListState> {
     });
   };
 
-  handleFilterGroups = (event: any) => {
-    // eslint-disable-next-line array-callback-return
-    const filteredUsers = this.state.users?.filter((user: any) => {
-      for (let i = 0; i < user.groups.length; i++) {
-        if (user.groups[i].id === +event.target.value) {
+  handleFilterGroups = (event: ChangeEvent<HTMLInputElement>) => {
+    const { users } = this.state;
+    const groupId: number = +event.target.value;
+
+    const filteredUsers = users
+      .map((user: IUserGroup) => {
+        if (
+          user.groups
+            .map((g: IGroup) => {
+              return g.id;
+            })
+            .includes(groupId)
+        ) {
           return user;
         }
-      }
-    });
+        return null;
+      })
+      .filter((el: any) => el != null);
 
     this.setState({
       filteredUsers,

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, SyntheticEvent, ChangeEvent } from "react";
 import { getGroups, deleteGroup, addGroup } from "../services/userManagement";
 import Spinner from "./common/Spinner";
 import GroupListView from "./GroupListView";
@@ -43,7 +43,6 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
       await deleteGroup(groupId);
       toast.success("group deleted");
 
-      // eslint-disable-next-line array-callback-return
       const groups = await getGroups();
 
       this.setState({ groups });
@@ -52,11 +51,11 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
     }
   };
 
-  handleAddGroupBtn = (event: any) => {
+  handleAddGroupBtn = (event: SyntheticEvent) => {
     this.setState({ showAddGroupInput: true });
   };
 
-  handleOnChangeNewGroup = (event: any) => {
+  handleOnChangeNewGroup = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       newGroup: {
         name: event.target.value,
@@ -64,7 +63,7 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
     });
   };
 
-  handleAddGroup = async (event: any) => {
+  handleAddGroup = async (event: SyntheticEvent) => {
     if (this.state.newGroup.name.length) {
       this.setState({ loading: true });
 

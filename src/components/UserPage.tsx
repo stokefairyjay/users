@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, SyntheticEvent, ChangeEvent } from "react";
 import FormInput from "./common/FormInput";
 import TextArea from "./common/TextArea";
 import {
@@ -20,7 +20,6 @@ interface IUserPageProps {
 interface IUserPageState {
   user: any;
   loading: boolean;
-  saving: boolean;
   errors: any;
   groupOps: any;
 }
@@ -41,7 +40,6 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
         id: null,
       },
       loading: true,
-      saving: false,
       errors: {},
       groupOps: {},
     };
@@ -63,7 +61,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
     this.setState({ loading: false });
   }
 
-  handleFromVaildation = () => {
+  handleFormValidation = () => {
     const { firstName, lastName, age, city, country, bio } = this.state.user;
     let errors: any = {};
 
@@ -79,13 +77,11 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
     return Object.keys(errors).length === 0;
   };
 
-  handleSave = async (event: any) => {
+  handleSave = async (event: SyntheticEvent) => {
     event.preventDefault();
-    if (!this.handleFromVaildation()) return;
+    if (!this.handleFormValidation()) return;
 
-    this.setState({ saving: true });
     const resp = await saveUser(this.state.user);
-    this.setState({ saving: false });
 
     if (resp?.id) {
       toast.success("user saved");
@@ -100,7 +96,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
     }
   };
 
-  handleChange = (event: any) => {
+  handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { user } = this.state;
     this.setState({
       user: {
@@ -138,12 +134,13 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
     const { groupOps } = this.state;
     const { groups } = this.state.user;
 
-    // eslint-disable-next-line array-callback-return
-    return groupOps.map((op: any) => {
-      if (groups.includes(op.value)) {
-        return op;
-      }
-    });
+    return groupOps
+      .map((op: any) => {
+        if (groups.includes(op.value)) {
+          return op;
+        } else return null;
+      })
+      .filter((el: any) => el != null);
   };
 
   render() {
@@ -255,12 +252,11 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
               {user.id ? (
                 <button
                   type="button"
-                  disabled={this.state.saving}
                   className="btn btn-outline-danger"
                   style={{ marginRight: 5 }}
                   onClick={this.handleDeleteUser}
                 >
-                  {this.state.saving ? "Deleteing..." : "Delete"}
+                  {"Delete"}
                 </button>
               ) : (
                 ""
@@ -271,7 +267,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                 disabled={this.state.loading}
                 className="btn btn-outline-primary"
               >
-                {this.state.saving ? "Saving..." : "Save"}
+                Save
               </button>
             </div>
           </form>

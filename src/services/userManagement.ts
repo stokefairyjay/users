@@ -10,7 +10,7 @@ import {
   IGroupDetail,
 } from "../interfaces";
 
-export async function getUserList(): Promise<IUserGroup[] | null> {
+export async function getUserList(): Promise<IUserGroup[]> {
   try {
     const users: IUser[] = await userAPI.getUsers();
     const groups: IGroup[] = await groupAPI.getGroups();
@@ -19,18 +19,13 @@ export async function getUserList(): Promise<IUserGroup[] | null> {
       .map((user) => {
         return {
           ...user,
-          // eslint-disable-next-line array-callback-return
-          groups: groups.filter((group) => {
-            if (user.groups?.includes(group.id)) {
-              return group;
-            }
-          }),
+          groups: groups.filter((group) => user.groups?.includes(group.id)),
         };
       })
       .reverse();
   } catch (error) {
     console.log(error);
-    return null;
+    return [];
   }
 }
 
@@ -61,7 +56,7 @@ export async function deleteUser(userId: number): Promise<void> {
   return;
 }
 
-export async function getGroupOptions(): Promise<IOptions[] | null> {
+export async function getGroupOptions(): Promise<IOptions[]> {
   try {
     const groups = await groupAPI.getGroups();
 
@@ -73,11 +68,11 @@ export async function getGroupOptions(): Promise<IOptions[] | null> {
     });
   } catch (error) {
     console.log(error);
-    return null;
+    return [];
   }
 }
 
-export async function getGroups(): Promise<IGroupDetail[] | null> {
+export async function getGroups(): Promise<IGroupDetail[]> {
   try {
     const users = await userAPI.getUsers();
     const activeGroups = users
@@ -100,7 +95,7 @@ export async function getGroups(): Promise<IGroupDetail[] | null> {
       .reverse();
   } catch (error) {
     console.log(error);
-    return null;
+    return [];
   }
 }
 

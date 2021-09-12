@@ -1,7 +1,7 @@
 import { IUser } from "../interfaces";
 const resource: string = "/users/";
 
-export async function getUsers() {
+export async function getUsers(): Promise<IUser[]> {
   return fetch(resource)
     .then(async (response: Response) => {
       if (response.ok) {
@@ -17,7 +17,7 @@ export async function getUsers() {
     });
 }
 
-export async function getUserById(userId: number) {
+export async function getUserById(userId: number): Promise<IUser> {
   return fetch(`${resource}${userId}`)
     .then(async (response: Response) => {
       if (response.ok) {
@@ -33,7 +33,7 @@ export async function getUserById(userId: number) {
     });
 }
 
-export function saveUser(user: IUser) {
+export function saveUser(user: IUser): Promise<IUser> {
   return fetch(resource + (user.id || ""), {
     method: user.id ? "PUT" : "POST",
     headers: { "content-type": "application/json" },
@@ -53,7 +53,7 @@ export function saveUser(user: IUser) {
     });
 }
 
-export function deleteUser(userID: number) {
+export function deleteUser(userID: number): Promise<{}> {
   return fetch(resource + userID, { method: "DELETE" })
     .then(async (response: Response) => {
       if (response.ok) {

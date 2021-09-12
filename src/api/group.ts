@@ -1,7 +1,7 @@
 import { IGroup } from "../interfaces";
 const resource: string = "/groups/";
 
-export async function getGroups() {
+export async function getGroups(): Promise<IGroup[]> {
   return fetch(resource)
     .then(async (response: Response) => {
       if (response.ok) {
@@ -17,7 +17,7 @@ export async function getGroups() {
     });
 }
 
-export function saveGroup(group: IGroup) {
+export async function saveGroup(group: IGroup): Promise<IGroup> {
   return fetch(resource + (group.id || ""), {
     method: group.id ? "PUT" : "POST",
     headers: { "content-type": "application/json" },
@@ -37,7 +37,7 @@ export function saveGroup(group: IGroup) {
     });
 }
 
-export function deleteGroup(groupID: number) {
+export async function deleteGroup(groupID: number): Promise<{}> {
   return fetch(resource + groupID, { method: "DELETE" })
     .then(async (response: Response) => {
       if (response.ok) {

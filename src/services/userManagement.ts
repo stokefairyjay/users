@@ -12,14 +12,21 @@ import {
 
 export async function getUserList(): Promise<IUserGroup[]> {
   try {
-    const users: IUser[] = await userAPI.getUsers();
-    const groups: IGroup[] = await groupAPI.getGroups();
+    const result: [IUser[], IGroup[]] = await Promise.all([
+      userAPI.getUsers(),
+      groupAPI.getGroups(),
+    ]);
+
+    const users = result[0];
+    const groups = result[1];
 
     return users
       .map((user) => {
         return {
           ...user,
-          groups: groups.filter((group) => user.groups?.includes(group.id)),
+          groups: groups.filter((group: IGroup) =>
+            user.groups?.includes(group.id)
+          ),
         };
       })
       .reverse();
@@ -31,7 +38,8 @@ export async function getUserList(): Promise<IUserGroup[]> {
 
 export async function saveUser(user: IUser): Promise<IUser | null> {
   try {
-    return userAPI.saveUser(user);
+    const resp: IUser = await userAPI.saveUser(user);
+    return resp;
   } catch (error) {
     console.log(error);
     return null;
@@ -49,7 +57,7 @@ export async function getUserById(userId: number): Promise<IUser | null> {
 
 export async function deleteUser(userId: number): Promise<void> {
   try {
-    userAPI.deleteUser(userId);
+    await userAPI.deleteUser(userId);
   } catch (error) {
     console.log(error);
   }
@@ -58,7 +66,7 @@ export async function deleteUser(userId: number): Promise<void> {
 
 export async function getGroupOptions(): Promise<IOptions[]> {
   try {
-    const groups = await groupAPI.getGroups();
+    const groups: IGroup[] = await groupAPI.getGroups();
 
     return groups.map((group: IGroup) => {
       return {
@@ -74,8 +82,8 @@ export async function getGroupOptions(): Promise<IOptions[]> {
 
 export async function getGroups(): Promise<IGroupDetail[]> {
   try {
-    const users = await userAPI.getUsers();
-    const activeGroups = users
+    const users: IUser[] = await userAPI.getUsers();
+    const activeGroups: number[] = users
       .map((user: IUser) => {
         return user.groups;
       })
@@ -83,10 +91,10 @@ export async function getGroups(): Promise<IGroupDetail[]> {
 
     const groupCounts = countBy(activeGroups);
 
-    const groups = await groupAPI.getGroups();
+    const groups: IGroup[] = await groupAPI.getGroups();
 
     return groups
-      .map((group: any) => {
+      .map((group: IGroup) => {
         return {
           ...group,
           memberCount: groupCounts[group.id] ? groupCounts[group.id] : 0,

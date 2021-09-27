@@ -2,111 +2,138 @@ import React, { Component, ChangeEvent } from "react";
 import UserListView from "./UserListView";
 import Spinner from "./common/Spinner";
 import { getUserList } from "../services/userManagement";
-import { IUserGroup, IGroup } from "../interfaces/index";
+import { IUser, IGroup } from "../interfaces/index";
 
 interface IUserListProps {}
 
 interface IUserListState {
-  users: IUserGroup[];
-  loading: boolean;
-  filteredUsers: any;
+    users: IUser[];
+    loading: boolean;
+    filteredUsers: IUser[];
+    searchTerm: string;
 }
 
 class UserList extends Component<IUserListProps, IUserListState> {
-  constructor(props: IUserListProps) {
-    super(props);
+    constructor(props: IUserListProps) {
+        super(props);
 
-    this.state = {
-      users: [],
-      filteredUsers: [],
-      loading: true,
-    };
-  }
+        this.state = {
+            users: [],
+            filteredUsers: [],
+            loading: true,
+            searchTerm: "",
+        };
+    }
 
-  async componentDidMount() {
-    const users = await getUserList();
-    this.setState({
-      users,
-      loading: false,
-      filteredUsers: users,
-    });
-  }
+    async componentDidMount() {
+        const users = await getUserList();
+        this.setState({
+            users,
+            loading: false,
+            filteredUsers: users,
+        });
+    }
 
-  searchUsers = (event: ChangeEvent<HTMLInputElement>) => {
-    const searchTerm = event.target.value.toLowerCase();
+    searchUsers = (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target.value.length) {
+            const searchTerm = event.target.value.trim();
+            const regex = new RegExp(searchTerm, "gis");
 
-    const filteredUsers = this.state.users?.filter(
-      (user: IUserGroup) =>
-        user.firstName.toLowerCase().includes(searchTerm) ||
-        user.lastName.toLowerCase().includes(searchTerm)
-    );
+            const filteredUsers = this.state.users
+                ?.filter((user: IUser) => {
+                    const fullName = `${user.firstName} ${user.lastName}`;
 
-    this.setState({
-      filteredUsers,
-    });
-  };
+                    if (fullName.match(regex)) {
+                        return user;
+                    }
+                    return null;
+                })
+                .filter((ele: IUser | null) => ele != null);
 
-  handleFilterGroups = (event: ChangeEvent<HTMLInputElement>) => {
-    const { users } = this.state;
-    const groupId: number = +event.target.value;
-
-    const filteredUsers = users
-      .map((user: IUserGroup) => {
-        if (
-          user.groups
-            .map((g: IGroup) => {
-              return g.id;
-            })
-            .includes(groupId)
-        ) {
-          return user;
+            this.setState({
+                searchTerm,
+                filteredUsers,
+            });
+        } else {
+            this.setState({
+                searchTerm: "",
+                filteredUsers: this.state.users,
+            });
         }
-        return null;
-      })
-      .filter((el: any) => el != null);
+    };
 
-    this.setState({
-      filteredUsers,
-    });
-  };
+    handleFilterGroups = (event: any) => {
+        const { users } = this.state;
+        const groupId: number = +event.target.value;
 
-  resetFilters = () => {
-    this.setState({
-      filteredUsers: this.state.users,
-    });
-  };
+        const filteredUsers = users
+            .map((user: IUser) => {
+                if (
+                    user.groups &&
+                    user.groups
+                        .map((g: IGroup) => {
+                            return g.id;
+                        })
+                        .includes(groupId)
+                ) {
+                    return user;
+                }
+                return null;
+            })
+            .filter((el: IUser | null) => el != null);
 
-  render() {
-    return this.state.users && !this.state.loading ? (
-      <>
-        <div className="row">
-          <div className="col-sm-10 mb-2">
-            <input
-              type="text"
-              name="searchUsers"
-              onChange={this.searchUsers}
-              placeholder="search for a user"
-            />
-          </div>
-          <div className="col-sm-2">
-            <button
-              className="btn btn-outline-info btn-sm"
-              onClick={this.resetFilters}
-            >
-              reset all filters
-            </button>
-          </div>
-        </div>
+        if (filteredUsers) {
+            this.setState({
+                filteredUsers: filteredUsers as IUser[],
+            });
+        }
+    };
 
-        <UserListView
-          users={this.state.filteredUsers}
-          filterGroups={this.handleFilterGroups}
-        />
-      </>
-    ) : (
-      <Spinner />
-    );
-  }
+    resetFilters = () => {
+        this.setState({
+            filteredUsers: this.state.users,
+        });
+    };
+
+    render() {
+        return this.state.users && !this.state.loading ? (
+            <>
+                <div className="row">
+                    <div className="col-sm-10 mb-2">
+                        <input
+                            type="text"
+                            name="searchUsers"
+                            onChange={this.searchUsers}
+                            placeholder="search for a user"
+                        />
+                    </div>
+                    <div className="col-sm-2">
+                        <button
+                            className="btn btn-outline-info btn-sm"
+                            onClick={this.resetFilters}
+                        >
+                            reset all filters
+                        </button>
+                    </div>
+                </div>
+
+                {this.state.filteredUsers.length ? (
+                    <UserListView
+                        users={this.state.filteredUsers}
+                        filterGroups={this.handleFilterGroups}
+                        searchTerm={this.state.searchTerm}
+                    />
+                ) : (
+                    <div className="alert alert-info">
+                        Sorry no results found for the term:{" "}
+                        {this.state.searchTerm}
+                    </div>
+                )}
+            </>
+        ) : (
+            <Spinner />
+        );
+    }
 }
 
 export default UserList;

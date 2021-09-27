@@ -2,15 +2,9 @@ import * as userAPI from "../api/user";
 import * as groupAPI from "../api/group";
 import countBy from "lodash.countby";
 
-import {
-  IUserGroup,
-  IUser,
-  IGroup,
-  IOptions,
-  IGroupDetail,
-} from "../interfaces";
+import { IUser, IGroup, IOption, IGroupDetail } from "../interfaces";
 
-export async function getUserList(): Promise<IUserGroup[]> {
+export async function getUserList(): Promise<IUser[]> {
   try {
     const result: [IUser[], IGroup[]] = await Promise.all([
       userAPI.getUsers(),
@@ -21,12 +15,13 @@ export async function getUserList(): Promise<IUserGroup[]> {
     const groups = result[1];
 
     return users
-      .map((user) => {
+      .map((user: IUser) => {
         return {
           ...user,
           groups: groups.filter((group: IGroup) =>
-            user.groups?.includes(group.id)
+            user.gids?.includes(group.id)
           ),
+          age: +user.age,
         };
       })
       .reverse();
@@ -64,7 +59,7 @@ export async function deleteUser(userId: number): Promise<void> {
   return;
 }
 
-export async function getGroupOptions(): Promise<IOptions[]> {
+export async function getGroupOptions(): Promise<IOption[]> {
   try {
     const groups: IGroup[] = await groupAPI.getGroups();
 
@@ -83,9 +78,9 @@ export async function getGroupOptions(): Promise<IOptions[]> {
 export async function getGroups(): Promise<IGroupDetail[]> {
   try {
     const users: IUser[] = await userAPI.getUsers();
-    const activeGroups: number[] = users
+    const activeGroups: any = users
       .map((user: IUser) => {
-        return user.groups;
+        return user.gids;
       })
       .flat();
 

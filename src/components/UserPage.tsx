@@ -1,6 +1,7 @@
 import React, { Component, SyntheticEvent, ChangeEvent } from "react";
 import FormInput from "./common/FormInput";
 import TextArea from "./common/TextArea";
+import { IUser, IUserError, IOption } from "../interfaces/index";
 import {
   saveUser,
   getUserById,
@@ -18,10 +19,10 @@ interface IUserPageProps {
 }
 
 interface IUserPageState {
-  user: any;
+  user: IUser;
   loading: boolean;
-  errors: any;
-  groupOps: any;
+  errors: IUserError;
+  groupOps: IOption[];
 }
 
 class UserPage extends Component<IUserPageProps, IUserPageState> {
@@ -32,16 +33,16 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
       user: {
         firstName: "",
         lastName: "",
-        age: null,
+        age: 0,
         city: "",
         country: "",
         bio: "",
-        groups: [],
-        id: null,
+        gids: [],
+        id: 0,
       },
       loading: true,
       errors: {},
-      groupOps: {},
+      groupOps: [],
     };
   }
 
@@ -63,7 +64,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
 
   handleFormValidation = () => {
     const { firstName, lastName, age, city, country, bio } = this.state.user;
-    let errors: any = {};
+    let errors: IUserError = {};
 
     if (!firstName) errors.firstName = "First Name is required.";
     if (!lastName) errors.lastName = "Last Name is required";
@@ -89,14 +90,15 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
     } else {
       this.setState({
         errors: {
-          handleSave:
-            "An error occured whilst saving the user, please try again",
+          onSave: "An error occured whilst saving the user, please try again",
         },
       });
     }
   };
 
-  handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+  handleChange = (
+    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const { user } = this.state;
     this.setState({
       user: {
@@ -107,22 +109,23 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
   };
 
   handleSelectChange = (selectedOps: any) => {
-    const gid = selectedOps.map((ops: any) => {
-      return ops.value;
-    });
+    const gids: any = selectedOps.map((ops: IOption) => ops.value);
 
     this.setState({
       user: {
         ...this.state.user,
-        groups: gid,
+        gids,
       },
     });
   };
 
   handleDeleteUser = async () => {
     try {
-      await deleteUser(this.state.user.id);
-      toast.success("user deleted");
+      const { id } = this.state.user;
+      if (id) {
+        await deleteUser(id);
+        toast.success("user deleted");
+      }
     } catch (error) {
       toast.error("user failed to delete");
     }
@@ -132,15 +135,16 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
 
   getDefaultedGroups = () => {
     const { groupOps } = this.state;
-    const { groups } = this.state.user;
-
-    return groupOps
-      .map((op: any) => {
-        if (groups.includes(op.value)) {
-          return op;
-        } else return null;
-      })
-      .filter((el: any) => el != null);
+    const { gids } = this.state.user;
+    if (gids) {
+      return groupOps
+        .map((op: any) => {
+          if (gids.includes(op.value)) {
+            return op;
+          } else return null;
+        })
+        .filter((el: any) => el != null);
+    }
   };
 
   render() {
@@ -170,7 +174,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                   value={user.firstName ? user.firstName : ""}
                   onChange={this.handleChange}
                   placeholder="please add your first name"
-                  error={errors?.firstName}
+                  error={errors.firstName ? errors.firstName : ""}
                 />
               </div>
               <div className="col-xs-12 col-sm-4 ">
@@ -181,7 +185,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                   value={user.lastName ? user.lastName : ""}
                   onChange={this.handleChange}
                   placeholder="please add your last name"
-                  error={errors?.lastName}
+                  error={errors.lastName ? errors.lastName : ""}
                 />
               </div>
               <div className="col-xs-12 col-sm-4">
@@ -192,7 +196,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                   value={user.age ? user.age : ""}
                   onChange={this.handleChange}
                   placeholder="please add your current age"
-                  error={errors?.age}
+                  error={errors.age ? errors.age : ""}
                 />
               </div>
             </div>
@@ -205,7 +209,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                   value={user.city ? user.city : ""}
                   onChange={this.handleChange}
                   placeholder="please add the city you currently live in"
-                  error={errors?.city}
+                  error={errors.city ? errors.city : ""}
                 />
               </div>
               <div className="col-xs-12 col-sm-6">
@@ -216,7 +220,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                   value={user.country ? user.country : ""}
                   onChange={this.handleChange}
                   placeholder="please add the country you currently live in"
-                  error={errors?.country}
+                  error={errors.country ? errors.country : ""}
                 />
               </div>
             </div>
@@ -228,7 +232,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                   value={user.bio ? user.bio : ""}
                   onChange={this.handleChange}
                   placeholder="please add a bit about yourself"
-                  error={errors?.bio}
+                  error={errors.bio ? errors.bio : ""}
                 />
               </div>
             </div>
@@ -239,7 +243,7 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
                     <Select
                       options={groupOps}
                       isMulti={true}
-                      name="groups"
+                      name="gids"
                       onChange={this.handleSelectChange}
                       defaultValue={this.getDefaultedGroups()}
                       placeholder="Become a Member of a Group"

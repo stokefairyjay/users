@@ -3,15 +3,16 @@ import { getGroups, deleteGroup, addGroup } from "../services/userManagement";
 import Spinner from "./common/Spinner";
 import GroupListView from "./GroupListView";
 import { toast } from "react-toastify";
+import { IGroupDetail, IGroup, ISimpleError } from "../interfaces";
 
 interface IGroupPageProps {}
 
 interface IGroupPageState {
-  groups: any;
-  newGroup: any;
+  groups: IGroupDetail[];
+  newGroup: IGroup;
   loading: boolean;
   showAddGroupInput: boolean;
-  errors: any;
+  errors: ISimpleError;
 }
 
 class Group extends Component<IGroupPageProps, IGroupPageState> {
@@ -22,6 +23,7 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
       groups: [],
       newGroup: {
         name: "",
+        id: 0,
       },
       loading: true,
       showAddGroupInput: false,
@@ -38,7 +40,7 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
     });
   }
 
-  handleDelete = async (groupId: number) => {
+  handleDelete = async (groupId: number): Promise<void> => {
     try {
       await deleteGroup(groupId);
       toast.success("group deleted");
@@ -58,6 +60,7 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
   handleOnChangeNewGroup = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       newGroup: {
+        ...this.state.newGroup,
         name: event.target.value,
       },
     });
@@ -66,34 +69,36 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
   handleAddGroup = async (event: SyntheticEvent) => {
     if (this.state.newGroup.name.length) {
       this.setState({ loading: true });
-
       await addGroup(this.state.newGroup);
-
-      const groups = await getGroups();
-
-      this.setState({
-        groups,
-        loading: false,
-        newGroup: {
-          name: "",
-        },
-        showAddGroupInput: false,
-      });
-
+      this.resetNewGroupForm();
       toast.success("new group was added");
     } else {
       this.setState({
         errors: {
-          newGroup: "name is required",
+          message: "name is required",
         },
       });
     }
   };
 
+  resetNewGroupForm = async () => {
+    const groups = await getGroups();
+
+    this.setState({
+      groups,
+      loading: false,
+      newGroup: {
+        name: "",
+        id: 0,
+      },
+      showAddGroupInput: false,
+    });
+  };
+
   render() {
     return (
       <>
-        {this.state.loading ? <Spinner /> : ""}
+        {this.state.loading && <Spinner />}
         {
           <button
             className="btn btn-outline-primary btn-sm"
@@ -102,7 +107,7 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
             Add New Group
           </button>
         }
-        {this.state.showAddGroupInput ? (
+        {this.state.showAddGroupInput && (
           <div className="row mt-4 mb-4">
             <div className="col-sm-8">
               <input
@@ -113,12 +118,10 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
                 onChange={this.handleOnChangeNewGroup}
                 value={this.state.newGroup.name}
               />
-              {this.state.errors.newGroup ? (
+              {this.state.errors?.message && (
                 <div className="alert alert-danger">
-                  {this.state.errors.newGroup}
+                  {this.state.errors.message}
                 </div>
-              ) : (
-                ""
               )}
             </div>
             <div className="col-sm-4">
@@ -130,16 +133,12 @@ class Group extends Component<IGroupPageProps, IGroupPageState> {
               </button>
             </div>
           </div>
-        ) : (
-          ""
         )}
-        {this.state.groups && this.state.groups.length ? (
+        {this.state.groups?.length && (
           <GroupListView
             groups={this.state.groups}
             onDeleteClick={this.handleDelete}
           />
-        ) : (
-          ""
         )}
       </>
     );

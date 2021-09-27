@@ -1,7 +1,10 @@
 import React from "react";
 import { IGroup } from "../interfaces";
 
-const ProfileGroupList = (props: { groups: IGroup[]; filterGroups: any }) => {
+const ProfileGroupList = (props: {
+  groups: IGroup[];
+  filterGroups: (event: any) => void;
+}) => {
   return (
     <>
       {props.groups?.length ? (

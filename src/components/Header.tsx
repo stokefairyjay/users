@@ -1,8 +1,8 @@
-import React from "react";
+import React, { CSSProperties } from "react";
 import { NavLink } from "react-router-dom";
 
 const Header = () => {
-  const activeStyle = { color: "#43caf0" };
+  const activeStyle: CSSProperties = { color: "#43caf0" };
   return (
     <nav className="navbar navbar-expand-lg">
       <div className="navbar-nav">

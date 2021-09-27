@@ -1,16 +1,16 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 
 const FormInput = (props: {
   type: string;
   name: string;
   label: string;
-  onChange: any;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   placeholder: string;
-  value: string;
+  value: string | number;
   error: string;
 }) => {
   let wrapperClass: string = "form-group";
-  if (props.error && props.error.length > 0) {
+  if (props.error?.length > 0) {
     wrapperClass = `${wrapperClass} has-error`;
   }
 
@@ -26,7 +26,9 @@ const FormInput = (props: {
           value={props.value}
           onChange={props.onChange}
         />
-        {props.error && <div className="alert alert-danger">{props.error}</div>}
+        {props.error && (
+          <div className="alert alert-danger mt-1 p-1">{props.error}</div>
+        )}
       </div>
     </div>
   );

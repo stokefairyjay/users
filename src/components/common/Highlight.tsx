@@ -10,9 +10,12 @@ const Highlight = (props: {
     const { searchString, searchTerm } = props;
     let replacedText: ReactNodeArray = [<>{searchString}</>];
 
-    const newRegex = new RegExp(searchTerm, "gis");
-    const match = searchString.match(newRegex);
+    const pattern = `${searchTerm.replaceAll(" ", "\\s").trim()}`;
+    const regex = new RegExp(pattern, "gi");
+
+    const match = searchString.match(regex);
     let rep = "";
+
     if (match?.[0]) {
         rep = match[0];
     }

@@ -1,69 +1,51 @@
-import React, { Component, ChangeEvent } from "react";
+import React, { ChangeEvent, useState, useEffect, useContext } from "react";
 import UserListView from "./UserListView";
-import Spinner from "./common/Spinner";
-import { getUserList } from "../services/userManagement";
 import { IUser, IGroup } from "../interfaces/index";
+import { UsersContext } from "../contexts/UsersContext";
+import Spinner from "./common/Spinner";
 
-interface IUserListProps {}
+const UserList = () => {
+    const { users, loading, hasError } = useContext(UsersContext);
+    const [filteredUsers, setFilteredUsers] = useState<IUser[]>([] as IUser[]);
+    const [searchTerm, setSearchTerm] = useState("");
 
-interface IUserListState {
-    users: IUser[];
-    loading: boolean;
-    filteredUsers: IUser[];
-    searchTerm: string;
-}
-
-class UserList extends Component<IUserListProps, IUserListState> {
-    constructor(props: IUserListProps) {
-        super(props);
-
-        this.state = {
-            users: [],
-            filteredUsers: [],
-            loading: true,
-            searchTerm: "",
-        };
-    }
-
-    async componentDidMount() {
-        const users = await getUserList();
-        this.setState({
-            users,
-            loading: false,
-            filteredUsers: users,
+    useEffect(() => {
+        users.sort((a: any, b: any) => {
+            if (a.id < b.id) {
+                return 1;
+            } else if (a.id > b.id) {
+                return -1;
+            }
+            return 0;
         });
-    }
 
-    searchUsers = (event: ChangeEvent<HTMLInputElement>) => {
+        setFilteredUsers(users);
+    }, [users]);
+
+    const searchUsers = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.value.length) {
             const searchTerm = event.target.value.trim();
-            const regex = new RegExp(searchTerm, "gis");
 
-            const filteredUsers = this.state.users
+            const filteredUsers = users
                 ?.filter((user: IUser) => {
-                    const fullName = `${user.firstName} ${user.lastName}`;
+                    const fullName = `${user.firstName.toLowerCase()} ${user.lastName.toLowerCase()}`;
 
-                    if (fullName.match(regex)) {
+                    if (fullName.indexOf(searchTerm) !== -1) {
                         return user;
                     }
                     return null;
                 })
                 .filter((ele: IUser | null) => ele != null);
 
-            this.setState({
-                searchTerm,
-                filteredUsers,
-            });
+            setSearchTerm(searchTerm);
+            setFilteredUsers(filteredUsers);
         } else {
-            this.setState({
-                searchTerm: "",
-                filteredUsers: this.state.users,
-            });
+            setSearchTerm("");
+            setFilteredUsers(users);
         }
     };
 
-    handleFilterGroups = (event: any) => {
-        const { users } = this.state;
+    const handleFilterGroups = (event: any) => {
         const groupId: number = +event.target.value;
 
         const filteredUsers = users
@@ -83,57 +65,38 @@ class UserList extends Component<IUserListProps, IUserListState> {
             .filter((el: IUser | null) => el != null);
 
         if (filteredUsers) {
-            this.setState({
-                filteredUsers: filteredUsers as IUser[],
-            });
+            setFilteredUsers(filteredUsers as IUser[]);
         }
     };
 
-    resetFilters = () => {
-        this.setState({
-            filteredUsers: this.state.users,
-        });
+    const resetFilters = () => {
+        setFilteredUsers(users);
     };
 
-    render() {
-        return this.state.users && !this.state.loading ? (
-            <>
-                <div className="row">
-                    <div className="col-sm-10 mb-2">
-                        <input
-                            type="text"
-                            name="searchUsers"
-                            onChange={this.searchUsers}
-                            placeholder="search for a user"
-                        />
-                    </div>
-                    <div className="col-sm-2">
-                        <button
-                            className="btn btn-outline-info btn-sm"
-                            onClick={this.resetFilters}
-                        >
-                            reset all filters
-                        </button>
-                    </div>
+    return hasError ? (
+        <div className="alert alert-danger">something broke</div>
+    ) : users && !loading ? (
+        <>
+            <div className="row">
+                <div className="col-sm-10 mb-2">
+                    <input type="text" name="searchUsers" onChange={searchUsers} placeholder="search for a user" />
                 </div>
+                <div className="col-sm-2">
+                    <button className="btn btn-outline-info btn-sm" onClick={resetFilters}>
+                        reset all filters
+                    </button>
+                </div>
+            </div>
 
-                {this.state.filteredUsers.length ? (
-                    <UserListView
-                        users={this.state.filteredUsers}
-                        filterGroups={this.handleFilterGroups}
-                        searchTerm={this.state.searchTerm}
-                    />
-                ) : (
-                    <div className="alert alert-info">
-                        Sorry no results found for the term:{" "}
-                        {this.state.searchTerm}
-                    </div>
-                )}
-            </>
-        ) : (
-            <Spinner />
-        );
-    }
-}
+            {filteredUsers.length ? (
+                <UserListView users={filteredUsers} filterGroups={handleFilterGroups} searchTerm={searchTerm} />
+            ) : (
+                <div className="alert alert-info">Sorry no results found for the term: {searchTerm}</div>
+            )}
+        </>
+    ) : (
+        <Spinner />
+    );
+};
 
 export default UserList;

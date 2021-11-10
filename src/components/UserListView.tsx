@@ -5,14 +5,20 @@ import profileImg from "../assets/profile.png";
 import { Link } from "react-router-dom";
 import Highlight from "./common/Highlight";
 
-const UserListView = (props: {
+interface IUserListViewProps {
     users: IUser[];
     filterGroups: (event: any) => void;
     searchTerm: string;
-}) => (
+}
+
+const UserListView = ({
+    users,
+    filterGroups,
+    searchTerm,
+}: IUserListViewProps) => (
     <>
-        {props.users ? (
-            props.users.map((user: IUser) => {
+        {users ? (
+            users.map((user: IUser) => {
                 return (
                     <div className="user-card mb-4" key={user.id}>
                         <div className="user-card-row">
@@ -21,13 +27,11 @@ const UserListView = (props: {
                             <div className="user-card-col">
                                 <div className="user-card-row">
                                     <h5>
-                                        {props.searchTerm.length ? (
+                                        {searchTerm.length ? (
                                             <>
                                                 <Highlight
                                                     searchString={`${user.firstName} ${user.lastName}`}
-                                                    searchTerm={
-                                                        props.searchTerm
-                                                    }
+                                                    searchTerm={searchTerm}
                                                     style={{ color: "red" }}
                                                 />
                                             </>
@@ -52,7 +56,7 @@ const UserListView = (props: {
                         {user.groups && (
                             <ProfileGroupListView
                                 groups={user.groups}
-                                filterGroups={props.filterGroups}
+                                filterGroups={filterGroups}
                             />
                         )}
                     </div>

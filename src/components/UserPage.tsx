@@ -1,36 +1,27 @@
-import React, { Component, SyntheticEvent, ChangeEvent } from "react";
+import React, { SyntheticEvent, ChangeEvent, useState, useEffect, useContext } from "react";
 import FormInput from "./common/FormInput";
 import TextArea from "./common/TextArea";
 import { IUser, IUserError, IOption } from "../interfaces/index";
-import {
-  saveUser,
-  getUserById,
-  getGroupOptions,
-  deleteUser,
-} from "../services/userManagement";
+import { getUserById, getGroupOptions } from "../services/userManagement";
 import Spinner from "./common/Spinner";
 import Select from "react-select";
 import { toast } from "react-toastify";
+import { useParams } from "react-router";
+import { UsersContext } from "../contexts/UsersContext";
 
-interface IUserPageProps {
-  userId: number;
-  history: any;
-  match: any;
+interface IUserPageParams {
+    id: string | undefined;
 }
 
-interface IUserPageState {
-  user: IUser;
-  loading: boolean;
-  errors: IUserError;
-  groupOps: IOption[];
-}
+const UserPage = () => {
+    const {
+        handleDeleteUser: handleDeleteUserCtx,
+        handleSaveUser: handleSaveUserCtx,
+        hasError: hasErrorCtx,
+    } = useContext(UsersContext);
 
-class UserPage extends Component<IUserPageProps, IUserPageState> {
-  constructor(props: IUserPageProps) {
-    super(props);
-
-    this.state = {
-      user: {
+    //const history = useHistory();
+    const initialUser: IUser = {
         firstName: "",
         lastName: "",
         age: 0,
@@ -39,246 +30,231 @@ class UserPage extends Component<IUserPageProps, IUserPageState> {
         bio: "",
         gids: [],
         id: 0,
-      },
-      loading: true,
-      errors: {},
-      groupOps: [],
     };
-  }
 
-  async componentDidMount() {
-    const groupOps = await getGroupOptions();
-    this.setState({
-      groupOps,
-    });
+    const [user, setUser] = useState<IUser | null>(initialUser);
+    const [loading, setLoading] = useState(true);
+    const [errors, setErrors] = useState<IUserError>({} as IUserError);
+    const [groupOps, setGroupOps] = useState<IOption[]>([] as IOption[]);
+    const [defaultedOps, setDefaultedOps] = useState<IOption[]>([]);
 
-    if (this.props.match.params.id) {
-      const user = await getUserById(+this.props.match.params.id);
-      if (user) {
-        this.setState({ user });
-      }
-    }
+    const { id }: IUserPageParams = useParams();
 
-    this.setState({ loading: false });
-  }
+    useEffect(() => {
+        async function fetchData() {
+            const groupOps = await getGroupOptions();
+            setGroupOps(groupOps);
 
-  handleFormValidation = () => {
-    const { firstName, lastName, age, city, country, bio } = this.state.user;
-    let errors: IUserError = {};
+            if (id) {
+                const data = await getUserById(+id);
+                let selectedOps: IOption[] = [];
+                if (data) {
+                    const { gids } = data;
+                    if (gids) {
+                        selectedOps = groupOps
+                            .map((op: any) => {
+                                if (gids.includes(op.value)) {
+                                    return op;
+                                }
+                                return null;
+                            })
+                            .filter((el: any) => el != null);
+                    }
+                }
 
-    if (!firstName) errors.firstName = "First Name is required.";
-    if (!lastName) errors.lastName = "Last Name is required";
-    if (!age) errors.age = "Age is required";
-    if (!city) errors.city = "City is required";
-    if (!country) errors.country = "Country is required";
-    if (!bio) errors.bio = "About is required";
+                setDefaultedOps(selectedOps);
+                setUser(data);
+            }
+            setLoading(false);
+        }
+        fetchData();
+    }, [id]);
 
-    this.setState({ errors });
+    const handleFormValidation = (): Boolean => {
+        let errors: IUserError = {};
 
-    return Object.keys(errors).length === 0;
-  };
+        if (!user?.firstName.length) {
+            errors.firstName = "First Name is required.";
+        }
+        if (!user?.lastName.length) {
+            errors.lastName = "Last Name is required";
+        }
+        if (user?.age === 0) {
+            errors.age = "Age is required";
+        }
+        if (!user?.city.length) {
+            errors.city = "City is required";
+        }
+        if (!user?.country) {
+            errors.country = "Country is required";
+        }
+        if (!user?.bio.length) {
+            errors.bio = "About is required";
+        }
 
-  handleSave = async (event: SyntheticEvent) => {
-    event.preventDefault();
-    if (!this.handleFormValidation()) return;
+        setErrors(errors);
 
-    const resp = await saveUser(this.state.user);
+        return Object.keys(errors).length === 0;
+    };
 
-    if (resp?.id) {
-      toast.success("user saved");
-      this.props.history.push(`/`);
-    } else {
-      this.setState({
-        errors: {
-          onSave: "An error occured whilst saving the user, please try again",
-        },
-      });
-    }
-  };
+    const handleSave = async (event: SyntheticEvent) => {
+        event.preventDefault();
 
-  handleChange = (
-    event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    const { user } = this.state;
-    this.setState({
-      user: {
-        ...user,
-        [event.target.name]: event.target.value,
-      },
-    });
-  };
+        if (!handleFormValidation()) {
+            return;
+        }
 
-  handleSelectChange = (selectedOps: any) => {
-    const gids: any = selectedOps.map((ops: IOption) => ops.value);
+        handleSaveUserCtx(user);
+        toast.success("user saved");
+    };
 
-    this.setState({
-      user: {
-        ...this.state.user,
-        gids,
-      },
-    });
-  };
+    const handleChange = (event: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLTextAreaElement>) => {
+        const data: any = { ...user, [event.target.name]: event.target.value };
+        setUser(data);
+    };
 
-  handleDeleteUser = async () => {
-    try {
-      const { id } = this.state.user;
-      if (id) {
-        await deleteUser(id);
-        toast.success("user deleted");
-      }
-    } catch (error) {
-      toast.error("user failed to delete");
-    }
+    const handleSelectChange = (selectedOps: any) => {
+        const gids: any = selectedOps.map((ops: IOption) => ops.value);
+        const data: any = { ...user, gids };
+        setUser(data);
+    };
 
-    this.props.history.push(`/`);
-  };
-
-  getDefaultedGroups = () => {
-    const { groupOps } = this.state;
-    const { gids } = this.state.user;
-    if (gids) {
-      return groupOps
-        .map((op: any) => {
-          if (gids.includes(op.value)) {
-            return op;
-          } else return null;
-        })
-        .filter((el: any) => el != null);
-    }
-  };
-
-  render() {
-    const { user, errors, loading, groupOps } = this.state;
+    const handleDeleteUser = async () => {
+        if (user && handleDeleteUserCtx) {
+            const { id } = user;
+            if (id) {
+                handleDeleteUserCtx(id);
+                setUser(initialUser);
+                setDefaultedOps([]);
+                toast.success("user deleted");
+            }
+        }
+    };
 
     return (
-      <>
-        {loading ? (
-          <Spinner />
-        ) : (
-          <form onSubmit={this.handleSave}>
-            <h2>{user?.id ? "Edit" : "Add"} User</h2>
-
-            {errors.onSave ? (
-              <div className="alert alert-danger" role="alert">
-                {errors.onSave}
-              </div>
+        <>
+            {loading ? (
+                <Spinner />
             ) : (
-              ""
-            )}
-            <div className="row mb-3 mt-2">
-              <div className="col-xs-12 col-sm-4">
-                <FormInput
-                  type="text"
-                  name="firstName"
-                  label="First Name"
-                  value={user.firstName ? user.firstName : ""}
-                  onChange={this.handleChange}
-                  placeholder="please add your first name"
-                  error={errors.firstName ? errors.firstName : ""}
-                />
-              </div>
-              <div className="col-xs-12 col-sm-4 ">
-                <FormInput
-                  type="text"
-                  name="lastName"
-                  label="Last Name"
-                  value={user.lastName ? user.lastName : ""}
-                  onChange={this.handleChange}
-                  placeholder="please add your last name"
-                  error={errors.lastName ? errors.lastName : ""}
-                />
-              </div>
-              <div className="col-xs-12 col-sm-4">
-                <FormInput
-                  type="number"
-                  name="age"
-                  label="Age"
-                  value={user.age ? user.age : ""}
-                  onChange={this.handleChange}
-                  placeholder="please add your current age"
-                  error={errors.age ? errors.age : ""}
-                />
-              </div>
-            </div>
-            <div className="row mb-3">
-              <div className="col-xs-12 col-sm-6">
-                <FormInput
-                  type="text"
-                  name="city"
-                  label="City"
-                  value={user.city ? user.city : ""}
-                  onChange={this.handleChange}
-                  placeholder="please add the city you currently live in"
-                  error={errors.city ? errors.city : ""}
-                />
-              </div>
-              <div className="col-xs-12 col-sm-6">
-                <FormInput
-                  type="text"
-                  name="country"
-                  label="Country"
-                  value={user.country ? user.country : ""}
-                  onChange={this.handleChange}
-                  placeholder="please add the country you currently live in"
-                  error={errors.country ? errors.country : ""}
-                />
-              </div>
-            </div>
-            <div className="row mb-3">
-              <div className="col-xs-12 ">
-                <TextArea
-                  name="bio"
-                  label="About"
-                  value={user.bio ? user.bio : ""}
-                  onChange={this.handleChange}
-                  placeholder="please add a bit about yourself"
-                  error={errors.bio ? errors.bio : ""}
-                />
-              </div>
-            </div>
-            <div className="row mb-3">
-              <div className="col-xs-12 ">
-                <div className="form-group">
-                  <div className="field">
-                    <Select
-                      options={groupOps}
-                      isMulti={true}
-                      name="gids"
-                      onChange={this.handleSelectChange}
-                      defaultValue={this.getDefaultedGroups()}
-                      placeholder="Become a Member of a Group"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              {user.id ? (
-                <button
-                  type="button"
-                  className="btn btn-outline-danger"
-                  style={{ marginRight: 5 }}
-                  onClick={this.handleDeleteUser}
-                >
-                  {"Delete"}
-                </button>
-              ) : (
-                ""
-              )}
+                <form onSubmit={handleSave}>
+                    <h2>{user?.id ? "Edit" : "Add"} User</h2>
 
-              <button
-                type="submit"
-                disabled={this.state.loading}
-                className="btn btn-outline-primary"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        )}
-      </>
+                    {hasErrorCtx ? (
+                        <div className="alert alert-danger" role="alert">
+                            an error has occured
+                        </div>
+                    ) : (
+                        ""
+                    )}
+                    <div className="row mb-3 mt-2">
+                        <div className="col-xs-12 col-sm-4">
+                            <FormInput
+                                type="text"
+                                name="firstName"
+                                label="First Name"
+                                value={user?.firstName ? user.firstName : ""}
+                                onChange={handleChange}
+                                placeholder="please add your first name"
+                                error={errors.firstName ? errors.firstName : ""}
+                            />
+                        </div>
+                        <div className="col-xs-12 col-sm-4 ">
+                            <FormInput
+                                type="text"
+                                name="lastName"
+                                label="Last Name"
+                                value={user?.lastName ? user.lastName : ""}
+                                onChange={handleChange}
+                                placeholder="please add your last name"
+                                error={errors.lastName ? errors.lastName : ""}
+                            />
+                        </div>
+                        <div className="col-xs-12 col-sm-4">
+                            <FormInput
+                                type="number"
+                                name="age"
+                                label="Age"
+                                value={user?.age ? user.age : ""}
+                                onChange={handleChange}
+                                placeholder="please add your current age"
+                                error={errors.age ? errors.age : ""}
+                            />
+                        </div>
+                    </div>
+                    <div className="row mb-3">
+                        <div className="col-xs-12 col-sm-6">
+                            <FormInput
+                                type="text"
+                                name="city"
+                                label="City"
+                                value={user?.city ? user.city : ""}
+                                onChange={handleChange}
+                                placeholder="please add the city you currently live in"
+                                error={errors.city ? errors.city : ""}
+                            />
+                        </div>
+                        <div className="col-xs-12 col-sm-6">
+                            <FormInput
+                                type="text"
+                                name="country"
+                                label="Country"
+                                value={user?.country ? user.country : ""}
+                                onChange={handleChange}
+                                placeholder="please add the country you currently live in"
+                                error={errors.country ? errors.country : ""}
+                            />
+                        </div>
+                    </div>
+                    <div className="row mb-3">
+                        <div className="col-xs-12 ">
+                            <TextArea
+                                name="bio"
+                                label="About"
+                                value={user?.bio ? user.bio : ""}
+                                onChange={handleChange}
+                                placeholder="please add a bit about yourself"
+                                error={errors.bio ? errors.bio : ""}
+                            />
+                        </div>
+                    </div>
+                    <div className="row mb-3">
+                        <div className="col-xs-12 ">
+                            <div className="form-group">
+                                <div className="field">
+                                    <Select
+                                        options={groupOps}
+                                        isMulti={true}
+                                        name="gids"
+                                        onChange={handleSelectChange}
+                                        defaultValue={defaultedOps}
+                                        placeholder="Become a Member of a Group"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        {user?.id ? (
+                            <button
+                                type="button"
+                                className="btn btn-outline-danger"
+                                style={{ marginRight: 5 }}
+                                onClick={handleDeleteUser}
+                            >
+                                {"Delete"}
+                            </button>
+                        ) : (
+                            ""
+                        )}
+
+                        <button type="submit" disabled={loading} className="btn btn-outline-primary">
+                            Save
+                        </button>
+                    </div>
+                </form>
+            )}
+        </>
     );
-  }
-}
+};
 
 export default UserPage;

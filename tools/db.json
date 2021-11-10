@@ -30,30 +30,6 @@
         5,
         3
       ]
-    },
-    {
-      "firstName": "jonathan",
-      "lastName": "jefferies",
-      "age": "39",
-      "city": "northam",
-      "country": "United Kingdom",
-      "bio": "a but",
-      "gids": [
-        3
-      ],
-      "id": 6
-    },
-    {
-      "firstName": "jay robert",
-      "lastName": "jefferies ",
-      "age": "39",
-      "city": "WIGSTON",
-      "country": "United Kingdom",
-      "bio": "yeah yeah yeah ",
-      "gids": [
-        6
-      ],
-      "id": 7
     }
   ],
   "groups": [
@@ -76,6 +52,10 @@
     {
       "name": "explosions in the sky",
       "id": 6
+    },
+    {
+      "name": "new one ",
+      "id": 7
     }
   ]
 }
